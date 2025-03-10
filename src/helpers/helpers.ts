@@ -1,6 +1,8 @@
 import { prisma } from "../db/db";
 import { SaddleItemDTO } from "../models/models";
 
+const BATCH_SIZE = 100;
+
 export const fetchTokenTradeSkillMasterUnlimited = async () => {
   const clientId = process.env.TSM_UNLIMITED_CLIENT_ID!;
   const clientSecret = process.env.TSM_UNLIMITED_CLIENT_SECRET!;
@@ -96,14 +98,18 @@ export const saveSaddleDataToDB = async (): Promise<void> => {
   const saddleData: Record<string, SaddleItemDTO> = await fetchSaddleData();
   const saddleArray: SaddleItemDTO[] = Object.values(saddleData);
 
-  await prisma.saddle_data_items.createMany({
-    data: saddleArray.map((item) => ({
-      itemID: item.itemID,
-      itemName: item.itemName,
-      itemQuality: item.itemQuality,
-      itemClass: item.item_class,
-      itemSubClass: item.item_subclass,
-    })),
-    skipDuplicates: true,
-  });
+  for (let i = 0; i < saddleArray.length; i += BATCH_SIZE) {
+    const batch = saddleArray.slice(i, i + BATCH_SIZE);
+
+    await prisma.saddle_data_items.createMany({
+      data: batch.map((item) => ({
+        itemID: item.itemID,
+        itemName: item.itemName,
+        itemQuality: item.itemQuality,
+        itemClass: item.item_class,
+        itemSubClass: item.item_subclass,
+      })),
+      skipDuplicates: true,
+    });
+  }
 };
