@@ -7,10 +7,13 @@
     "start": "bun run --watch --expose-gc src/index.ts"
   },
   "dependencies": {
+    "@elysiajs/cors": "^1.2.0",
+    "@prisma/client": "^6.4.1",
     "elysia": "latest"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "prisma": "^6.4.1"
   },
   "module": "src/index.js"
 }

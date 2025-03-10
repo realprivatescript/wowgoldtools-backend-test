@@ -1,16 +1,30 @@
 import { Elysia } from "elysia";
-const memoryUsage = process.memoryUsage();
+import { cors } from "@elysiajs/cors";
+import { prisma } from "./db/db";
+import { checkMemoryUsage } from "./debug/debug";
+import { loadInitialState } from "./state/functions";
+import { saveSaddleDataToDB } from "./helpers/helpers";
 
 const app = new Elysia()
-  .get("/", () => {
-    console.log("Memory Usage:");
-    console.log(`RSS (Resident Set Size): ${memoryUsage.rss / 1024 / 1024} MB`);
-    console.log(`Heap Total: ${memoryUsage.heapTotal / 1024 / 1024} MB`);
-    console.log(`Heap Used: ${memoryUsage.heapUsed / 1024 / 1024} MB`);
-    console.log(`External: ${memoryUsage.external / 1024 / 1024} MB`);
-    return "Hello Elysia";
+  .state("state", {})
+  .onStart(async () => {
+    const initialStateData = await loadInitialState();
+    app.store.state = initialStateData;
+    checkMemoryUsage(process.memoryUsage());
+
+    try {
+      console.log("Before saving saddle data");
+      await saveSaddleDataToDB();
+      console.log("456 - Saddle data saved");
+    } catch (error) {
+      console.error("Error in saveSaddleDataToDB:", error);
+    }
+
+    checkMemoryUsage(process.memoryUsage());
   })
-  .listen(3000);
+  .use(cors())
+  .get("/", async () => {})
+  .listen(3500);
 
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
