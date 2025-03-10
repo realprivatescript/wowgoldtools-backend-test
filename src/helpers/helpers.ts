@@ -1,7 +1,6 @@
 import { prisma } from "../db/db";
+import { BATCH_SIZE } from "../globals/globals";
 import { SaddleItemDTO } from "../models/models";
-
-const BATCH_SIZE = 100;
 
 export const fetchTokenTradeSkillMasterUnlimited = async () => {
   const clientId = process.env.TSM_UNLIMITED_CLIENT_ID!;
