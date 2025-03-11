@@ -5,7 +5,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts",
     "start": "bun run --watch --expose-gc src/index.ts",
-    "build": "bun prisma generate"
+    "build": "bun build --compile --minify-whitespace --minify-syntax --target bun --outfile server ./src/index.ts prisma generate"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.2.0",
