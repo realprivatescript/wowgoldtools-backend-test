@@ -15,9 +15,12 @@ const app = new Elysia()
     try {
       console.log("Before saving saddle data");
       await saveSaddleDataToDB();
-      console.log("456 - Saddle data saved");
+      console.log("Saddle data saved");
+      const saddleData = await prisma.saddle_data_items.findMany();
+
+      console.log("Saddle data fetched");
     } catch (error) {
-      console.error("Error in saveSaddleDataToDB:", error);
+      console.error("Error:", error);
     }
 
     checkMemoryUsage(process.memoryUsage());
