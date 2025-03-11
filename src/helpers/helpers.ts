@@ -354,3 +354,41 @@ export const saveToDatabaseTSMClassicDataFromAllAuctionHouses = async (
     console.log("Garbage collection triggered.");
   }
 };
+
+export function calculateFlippingScore(
+  marketValue: number,
+  historical: number,
+  minBuyout: number,
+  quantity: number
+) {
+  // Calculate the price proximity score (how close marketValue is to historical)
+  const priceProximityScore =
+    1 - Math.abs(marketValue - historical) / marketValue;
+
+  // Normalize the price proximity score to 0-999 range
+  const normalizedPriceProximityScore = Math.min(
+    Math.max(priceProximityScore * 999, 0),
+    999
+  );
+
+  // Calculate the potential gold earned per unit
+  const goldEarned = (marketValue - minBuyout) * quantity;
+
+  // Normalize gold earned to 0-999 range
+  const normalizedGoldEarnedScore = Math.min(
+    Math.max(goldEarned / 1000, 0),
+    999
+  ); // Adjust the divisor as needed for scaling
+
+  // We can combine these scores by giving them weights
+  const weightPrice = 0.7; // Price proximity score weight (60% of the final score)
+  const weightGold = 0.3; // Gold earned score weight (40% of the final score)
+
+  // Calculate final flipping score
+  const flippingScore = Math.round(
+    normalizedPriceProximityScore * weightPrice +
+      normalizedGoldEarnedScore * weightGold
+  );
+
+  return flippingScore;
+}

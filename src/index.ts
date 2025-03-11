@@ -3,6 +3,7 @@ import { cors } from "@elysiajs/cors";
 import { checkMemoryUsage } from "./debug/debug";
 import { loadInitialState } from "./state/functions";
 import {
+  calculateFlippingScore,
   saveSaddleDataToDB,
   saveToDatabaseTSMClassicDataFromAllAuctionHouses,
 } from "./helpers/helpers";
@@ -51,11 +52,33 @@ const app = new Elysia()
       .get(
         "/ah-data/:auctionHouseId",
         async ({ params }) => {
-          return await prisma.extended_auction_data_items.findMany({
-            where: {
-              auctionHouseId: params.auctionHouseId,
-            },
-          });
+          const pricingData = await prisma.extended_auction_data_items.findMany(
+            {
+              where: {
+                auctionHouseId: params.auctionHouseId,
+              },
+            }
+          );
+
+          const customisedPricingData = pricingData.map((item) => ({
+            ...item,
+            profitMarginVsMarketValue:
+              ((item.marketValue.toNumber() - item.minBuyout.toNumber()) /
+                item.marketValue.toNumber()) *
+              100,
+            profitMarginVsHistorical:
+              ((item.historical.toNumber() - item.minBuyout.toNumber()) /
+                item.historical.toNumber()) *
+              100,
+            marketToHistoricalRatio:
+              item.marketValue.toNumber() / item.historical.toNumber(),
+            flippingScore: calculateFlippingScore(
+              item.marketValue.toNumber(),
+              item.historical.toNumber(),
+              item.minBuyout.toNumber(),
+              item.quantity
+            ),
+          }));
         },
         {
           params: t.Object({
