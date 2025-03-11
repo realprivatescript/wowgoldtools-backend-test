@@ -197,11 +197,6 @@ export const saveToDatabaseTSMClassicDataFromAllAuctionHouses = async (
             }
           );
 
-          if (!res) {
-            console.log("RES IS NULL!");
-            console.log(ah.auctionHouseId);
-            console.log({ res });
-          }
           const pricing = await res.json();
 
           return pricing.map(
