@@ -32,21 +32,38 @@ const app = new Elysia()
   .use(cors())
   .get("/", async () => {})
   .group("/classic", (app) =>
-    app.get(
-      "/ah-data/:auctionHouseId",
-      async ({ params }) => {
+    app
+      .get("/all-realms-data", async ({}) => {
         return await prisma.extended_auction_data_items.findMany({
-          where: {
-            auctionHouseId: params.auctionHouseId,
+          distinct: ["auctionHouseId"],
+          take: 1,
+          select: {
+            auctionHouseId: true,
+            name: true,
+            regionId: true,
+            realmId: true,
+            regionPrefix: true,
+            gameVersion: true,
+            lastModified: true,
+            type: true,
           },
         });
-      },
-      {
-        params: t.Object({
-          auctionHouseId: t.Number(),
-        }),
-      }
-    )
+      })
+      .get(
+        "/ah-data/:auctionHouseId",
+        async ({ params }) => {
+          return await prisma.extended_auction_data_items.findMany({
+            where: {
+              auctionHouseId: params.auctionHouseId,
+            },
+          });
+        },
+        {
+          params: t.Object({
+            auctionHouseId: t.Number(),
+          }),
+        }
+      )
   )
   .listen(3000);
 
