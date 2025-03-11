@@ -62,17 +62,20 @@ const app = new Elysia()
 
           const customisedPricingData = pricingData.map((item) => ({
             ...item,
-            profitMarginVsMarketValue:
+            profitMarginVsMarketValue: (
               ((item.marketValue.toNumber() - item.minBuyout.toNumber()) /
                 item.marketValue.toNumber()) *
-              1000,
+              1000
+            ).toFixed(2),
 
-            profitMarginVsHistorical:
+            profitMarginVsHistorical: (
               ((item.historical.toNumber() - item.minBuyout.toNumber()) /
                 item.historical.toNumber()) *
-              1000,
-            marketToHistoricalRatio:
-              item.marketValue.toNumber() / item.historical.toNumber(),
+              1000
+            ).toFixed(2),
+            marketToHistoricalRatio: (
+              item.marketValue.toNumber() / item.historical.toNumber()
+            ).toFixed(2),
             flippingScore: calculateFlippingScore(
               item.marketValue.toNumber(),
               item.historical.toNumber(),
