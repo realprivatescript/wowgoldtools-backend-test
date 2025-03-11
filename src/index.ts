@@ -60,7 +60,7 @@ const app = new Elysia()
             }
           );
 
-          return pricingData.map((item) => ({
+          const customisedPricingData = pricingData.map((item) => ({
             ...item,
             profitMarginVsMarketValue:
               ((item.marketValue.toNumber() - item.minBuyout.toNumber()) /
