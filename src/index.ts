@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { checkMemoryUsage } from "./debug/debug";
 import { loadInitialState } from "./state/functions";
@@ -6,13 +6,13 @@ import {
   saveSaddleDataToDB,
   saveToDatabaseTSMClassicDataFromAllAuctionHouses,
 } from "./helpers/helpers";
+import { prisma } from "./db/db";
 
 const app = new Elysia()
   .state("state", {})
   .onStart(async () => {
     const initialStateData = await loadInitialState();
     app.store.state = initialStateData;
-
     try {
       checkMemoryUsage(process.memoryUsage());
       console.log("Before saving saddle data");
@@ -31,6 +31,23 @@ const app = new Elysia()
   })
   .use(cors())
   .get("/", async () => {})
+  .group("/classic", (app) =>
+    app.get(
+      "/ah-data/:auctionHouseId",
+      async ({ params }) => {
+        return await prisma.extended_auction_data_items.findMany({
+          where: {
+            auctionHouseId: params.auctionHouseId,
+          },
+        });
+      },
+      {
+        params: t.Object({
+          auctionHouseId: t.Number(),
+        }),
+      }
+    )
+  )
   .listen(3000);
 
 console.log(
