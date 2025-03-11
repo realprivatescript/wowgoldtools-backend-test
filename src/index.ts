@@ -16,7 +16,6 @@ const app = new Elysia()
       console.log("Before saving saddle data");
       await saveSaddleDataToDB();
       console.log("Saddle data saved");
-      const saddleData = await prisma.saddle_data_items.findMany();
 
       console.log("Saddle data fetched");
     } catch (error) {
