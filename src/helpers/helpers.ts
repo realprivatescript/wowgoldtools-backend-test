@@ -196,7 +196,11 @@ export const saveToDatabaseTSMClassicDataFromAllAuctionHouses = async (
               headers: { Authorization: `Bearer ${tsmToken}` },
             }
           );
+          if (!res) {
+            return null;
+          }
           const pricing = await res.json();
+
           return pricing.map(
             (item: {
               auctionHouseId: number;
@@ -228,7 +232,7 @@ export const saveToDatabaseTSMClassicDataFromAllAuctionHouses = async (
         }
       )
     )
-  ).then((data) => data.flat());
+  ).then((data) => data.flat().filter(Boolean));
 
   // Filter and sort pricing data
   const filteredAllPricingData = allPricingData
