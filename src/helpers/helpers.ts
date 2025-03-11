@@ -196,6 +196,9 @@ export const saveToDatabaseTSMClassicDataFromAllAuctionHouses = async (
               headers: { Authorization: `Bearer ${tsmToken}` },
             }
           );
+
+          console.log({ res });
+
           if (!res) {
             return null;
           }
