@@ -65,11 +65,12 @@ const app = new Elysia()
             profitMarginVsMarketValue:
               ((item.marketValue.toNumber() - item.minBuyout.toNumber()) /
                 item.marketValue.toNumber()) *
-              100,
+              1000,
+
             profitMarginVsHistorical:
               ((item.historical.toNumber() - item.minBuyout.toNumber()) /
                 item.historical.toNumber()) *
-              100,
+              1000,
             marketToHistoricalRatio:
               item.marketValue.toNumber() / item.historical.toNumber(),
             flippingScore: calculateFlippingScore(
