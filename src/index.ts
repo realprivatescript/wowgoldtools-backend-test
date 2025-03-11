@@ -79,6 +79,7 @@ const app = new Elysia()
               item.quantity
             ),
           }));
+          return customisedPricingData;
         },
         {
           params: t.Object({
