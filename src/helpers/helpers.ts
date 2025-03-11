@@ -1,5 +1,5 @@
 import { prisma } from "../db/db";
-import { BATCH_SIZE } from "../globals/globals";
+import { BATCH_SIZE, limit } from "../globals/globals";
 import { SaddleItemDTO } from "../models/models";
 
 export const fetchTokenTradeSkillMasterUnlimited = async () => {
@@ -110,5 +110,247 @@ export const saveSaddleDataToDB = async (): Promise<void> => {
       })),
       skipDuplicates: true,
     });
+  }
+};
+
+export const saveToDatabaseTSMClassicDataFromAllAuctionHouses = async (
+  tsmToken: string,
+  blizzToken: string
+) => {
+  const saddleData = await prisma.saddle_data_items.findMany();
+
+  // Fetch all regions
+  const allRegions = await fetch(
+    `https://realm-api.tradeskillmaster.com/regions`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${tsmToken}`,
+        "Content-Type": "application/json",
+      },
+    }
+  )
+    .then((res) => res.json())
+    .then((data) => data.items);
+
+  // Filter regions (EU/US & non-Retail)
+  const filteredRegions = allRegions.filter(
+    (region: {
+      regionId: number;
+      regionPrefix: string;
+      gameVersion: string;
+      lastModified: number;
+    }) =>
+      (region.regionPrefix === "eu" || region.regionPrefix === "us") &&
+      region.gameVersion !== "Retail"
+  );
+
+  // Fetch all realms for the filtered regions
+  const allRealms = await Promise.all(
+    filteredRegions.map(
+      async (region: {
+        regionId: number;
+        regionPrefix: string;
+        gameVersion: string;
+        lastModified: number;
+      }) => {
+        const res = await fetch(
+          `https://realm-api.tradeskillmaster.com/regions/${region.regionId}/realms`,
+          { headers: { Authorization: `Bearer ${tsmToken}` } }
+        );
+        const data = await res.json();
+        return data.items.map(
+          (realm: {
+            realmId: number;
+            regionId: number;
+            name: string;
+            localizedName: string;
+            locale: string;
+            auctionHouses: {
+              auctionHouseId: number;
+              type: string;
+              lastModified: number;
+            }[];
+          }) => ({
+            ...realm,
+            regionPrefix: region.regionPrefix,
+            gameVersion: region.gameVersion,
+          })
+        );
+      }
+    )
+  ).then((realms) => realms.flat());
+
+  // Fetch all auction house pricing data
+  const allPricingData = await Promise.all(
+    allRealms.flatMap((realm) =>
+      realm.auctionHouses.map(
+        async (ah: {
+          auctionHouseId: number;
+          type: string;
+          lastModified: number;
+        }) => {
+          const res = await fetch(
+            `https://pricing-api.tradeskillmaster.com/ah/${ah.auctionHouseId}`,
+            {
+              headers: { Authorization: `Bearer ${tsmToken}` },
+            }
+          );
+          const pricing = await res.json();
+          return pricing.map(
+            (item: {
+              auctionHouseId: number;
+              itemId: number;
+              petSpeciesId: number | null; // petSpeciesId can either be a number or null
+              minBuyout: number;
+              quantity: number;
+              marketValue: number;
+              historical: number;
+              numAuctions: number;
+              name: string;
+              regionId: number;
+              realmId: number;
+              regionPrefix: string;
+              gameVersion: string;
+              lastModified: number; // Unix timestamp
+              type: string;
+            }) => ({
+              ...item,
+              name: realm.name,
+              regionId: realm.regionId,
+              realmId: realm.realmId,
+              regionPrefix: realm.regionPrefix,
+              gameVersion: realm.gameVersion,
+              lastModified: ah.lastModified,
+              type: ah.type,
+            })
+          );
+        }
+      )
+    )
+  ).then((data) => data.flat());
+
+  // Filter and sort pricing data
+  const filteredAllPricingData = allPricingData
+    .filter((auction) => auction.marketValue > 0 && auction.historical > 0)
+    .sort((a, b) =>
+      a.regionId === b.regionId
+        ? a.realmId - b.realmId
+        : a.regionId - b.regionId
+    );
+
+  // Filter out auction houses with low item count
+  const filteredAllPricingDataHighCount = (() => {
+    const counts = filteredAllPricingData.reduce((acc, { auctionHouseId }) => {
+      acc[auctionHouseId] = (acc[auctionHouseId] || 0) + 1;
+      return acc;
+    }, {} as Record<number, number>);
+
+    return filteredAllPricingData.filter(
+      ({ auctionHouseId }) => counts[auctionHouseId] >= 5000
+    );
+  })();
+
+  // Get unique item IDs for media fetch
+  const uniqueItemIds = [
+    ...new Set(
+      filteredAllPricingDataHighCount.map((auction) => auction.itemId)
+    ),
+  ];
+
+  // Fetch existing item media
+  const findAllItemMediaCaches = await prisma.item_media_caches.findMany();
+  const itemMediaCachesIds = new Set(
+    findAllItemMediaCaches.map((item) => item.itemId)
+  );
+  const itemIdsToFetch = uniqueItemIds.filter(
+    (itemId) => !itemMediaCachesIds.has(itemId)
+  );
+
+  // Fetch missing media data
+  const fetchItemMedia = async (itemId: number) => {
+    const res = await fetch(
+      `https://us.api.blizzard.com/data/wow/media/item/${itemId}?namespace=static-us&locale=en_US`,
+      {
+        headers: { Authorization: `Bearer ${blizzToken}` },
+      }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.assets?.[0]?.value
+      ? { itemId, itemMediaUrl: data.assets[0].value }
+      : null;
+  };
+
+  const newMediaData = await Promise.all(
+    itemIdsToFetch.map((id) => fetchItemMedia(id))
+  ).then((results) => results.filter((item) => item !== null));
+
+  // Save new media data
+  for (let i = 0; i < newMediaData.length; i += BATCH_SIZE) {
+    const batch = newMediaData.slice(i, i + BATCH_SIZE);
+    await prisma.item_media_caches.createMany({
+      data: batch,
+      skipDuplicates: true,
+    });
+  }
+
+  // Merge new and existing media caches
+  const allMediaCaches = [...findAllItemMediaCaches, ...newMediaData];
+
+  // Merge pricing data with media
+  const filteredAllPricingDataHighCountWithItemMedia =
+    filteredAllPricingDataHighCount
+      .map((auctionItem) => {
+        const mediaItem = allMediaCaches.find(
+          (media) => media.itemId === auctionItem.itemId
+        );
+        return {
+          ...auctionItem,
+          itemMediaUrl: mediaItem?.itemMediaUrl || null,
+        };
+      })
+      .filter((item) => item.itemMediaUrl !== null);
+
+  // Merge with saddle data
+  const filteredAllPricingDataHighCountWithItemMediaAndSaddleData =
+    filteredAllPricingDataHighCountWithItemMedia
+      .map((auctionItem) => {
+        const saddleItem = saddleData.find(
+          (s) => s.itemID === auctionItem.itemId
+        );
+        return saddleItem
+          ? {
+              ...auctionItem,
+              itemName: saddleItem.itemName,
+              itemQuality: saddleItem.itemQuality,
+              itemClass: saddleItem.itemClass,
+              itemSubClass: saddleItem.itemSubClass,
+            }
+          : null;
+      })
+      .filter((item) => item !== null);
+
+  // Save data to the database with batching
+  for (
+    let i = 0;
+    i < filteredAllPricingDataHighCountWithItemMediaAndSaddleData.length;
+    i += BATCH_SIZE
+  ) {
+    const batch =
+      filteredAllPricingDataHighCountWithItemMediaAndSaddleData.slice(
+        i,
+        i + BATCH_SIZE
+      );
+    await prisma.extended_auction_data_items.createMany({
+      data: batch,
+      skipDuplicates: true,
+    });
+  }
+
+  // Trigger garbage collection if available
+  if (global.gc) {
+    global.gc();
+    console.log("Garbage collection triggered.");
   }
 };

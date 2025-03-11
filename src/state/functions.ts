@@ -12,16 +12,16 @@ export async function loadInitialState() {
     return [null, null]; // Return default values if both promises fail
   });
 
-  if (!tsmTokenData) {
+  if (!tsmTokenData || !tsmTokenData.access_token) {
     throw "Error fetching tsmTokenData";
   }
 
-  if (!blizzTokenData) {
+  if (!blizzTokenData || !blizzTokenData.access_token) {
     throw "Error fetching blizzTokenData";
   }
 
   return {
-    tsmToken: tsmTokenData.access_token,
-    blizzToken: blizzTokenData.access_token,
+    tsmToken: tsmTokenData.access_token! as string,
+    blizzToken: blizzTokenData.access_token! as string,
   };
 }

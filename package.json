@@ -10,7 +10,8 @@
   "dependencies": {
     "@elysiajs/cors": "^1.2.0",
     "@prisma/client": "^6.4.1",
-    "elysia": "latest"
+    "elysia": "latest",
+    "p-limit": "^6.2.0"
   },
   "devDependencies": {
     "bun-types": "latest",

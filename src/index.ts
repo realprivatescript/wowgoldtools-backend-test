@@ -1,32 +1,37 @@
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
-import { prisma } from "./db/db";
 import { checkMemoryUsage } from "./debug/debug";
 import { loadInitialState } from "./state/functions";
-import { saveSaddleDataToDB } from "./helpers/helpers";
+import {
+  saveSaddleDataToDB,
+  saveToDatabaseTSMClassicDataFromAllAuctionHouses,
+} from "./helpers/helpers";
 
 const app = new Elysia()
   .state("state", {})
   .onStart(async () => {
     const initialStateData = await loadInitialState();
     app.store.state = initialStateData;
-    checkMemoryUsage(process.memoryUsage());
 
     try {
+      checkMemoryUsage(process.memoryUsage());
       console.log("Before saving saddle data");
       await saveSaddleDataToDB();
       console.log("Saddle data saved");
-
-      console.log("Saddle data fetched");
+      checkMemoryUsage(process.memoryUsage());
+      await saveToDatabaseTSMClassicDataFromAllAuctionHouses(
+        initialStateData.tsmToken,
+        initialStateData.blizzToken
+      );
+      console.log("Full AH data items fetched");
+      checkMemoryUsage(process.memoryUsage());
     } catch (error) {
       console.error("Error:", error);
     }
-
-    checkMemoryUsage(process.memoryUsage());
   })
   .use(cors())
   .get("/", async () => {})
-  .listen(3500);
+  .listen(3000);
 
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
