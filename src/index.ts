@@ -66,13 +66,12 @@ const app = new Elysia()
               ((item.marketValue.toNumber() - item.minBuyout.toNumber()) /
                 item.marketValue.toNumber()) *
               1000
-            ).toFixed(2),
-
+            ).toFixed(0),
             profitMarginVsHistorical: (
               ((item.historical.toNumber() - item.minBuyout.toNumber()) /
                 item.historical.toNumber()) *
               1000
-            ).toFixed(2),
+            ).toFixed(0),
             marketToHistoricalRatio: (
               item.marketValue.toNumber() / item.historical.toNumber()
             ).toFixed(2),
