@@ -36,7 +36,6 @@ const app = new Elysia()
       .get("/all-realms-data", async ({}) => {
         return await prisma.extended_auction_data_items.findMany({
           distinct: ["auctionHouseId"],
-          take: 1,
           select: {
             auctionHouseId: true,
             name: true,
