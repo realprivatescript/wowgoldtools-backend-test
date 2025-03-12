@@ -77,13 +77,19 @@ const app = new Elysia()
               99999
             ).toFixed(0),
             marketValueVsHistoricalDeviation: (
-              10 /
-              (1 +
+              1 +
+              (9 *
                 Math.abs(
                   Math.log(
                     item.marketValue.toNumber() / item.historical.toNumber()
                   )
-                ))
+                )) /
+                (1 +
+                  Math.abs(
+                    Math.log(
+                      item.marketValue.toNumber() / item.historical.toNumber()
+                    )
+                  ))
             ).toFixed(2),
             flippingScore: calculateFlippingScore(
               item.marketValue.toNumber(),
