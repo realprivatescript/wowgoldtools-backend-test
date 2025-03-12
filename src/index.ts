@@ -50,7 +50,7 @@ const app = new Elysia()
         });
       })
       .get(
-        "/ah-data/:auctionHouseId",
+        "/ah-data-flipping/:auctionHouseId",
         async ({ params }) => {
           const pricingData = await prisma.extended_auction_data_items.findMany(
             {
