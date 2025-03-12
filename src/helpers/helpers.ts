@@ -392,8 +392,8 @@ export function calculateFlippingScore(
 
   // Define weights
   const weightProximity = 0.3;
-  const weightProfit = 0.35;
-  const weightGold = 0.35;
+  const weightProfit = 0.45;
+  const weightGold = 0.25;
 
   // Calculate final flipping score
   const flippingScore = Math.round(
