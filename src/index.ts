@@ -56,6 +56,7 @@ const app = new Elysia()
             {
               where: {
                 auctionHouseId: params.auctionHouseId,
+                quantity: { not: 0 },
               },
             }
           );

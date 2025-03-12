@@ -234,12 +234,7 @@ export const saveToDatabaseTSMClassicDataFromAllAuctionHouses = async (
 
   // Filter and sort pricing data
   const filteredAllPricingData = allPricingData
-    .filter(
-      (auction) =>
-        auction.marketValue > 0 &&
-        auction.historical > 0 &&
-        auction.minBuyout > 0
-    )
+    .filter((auction) => auction.marketValue > 0 && auction.historical > 0)
     .sort((a, b) =>
       a.regionId === b.regionId
         ? a.realmId - b.realmId
