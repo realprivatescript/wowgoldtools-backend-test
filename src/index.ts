@@ -106,6 +106,43 @@ const app = new Elysia()
           }),
         }
       )
+      .get(
+        "/ah-data-favorites/:auctionHouseId",
+        async ({ params }) => {
+          const pricingData = await prisma.extended_auction_data_items.findMany(
+            {
+              where: {
+                auctionHouseId: params.auctionHouseId,
+              },
+              select: {
+                auctionHouseId: true,
+                itemId: true,
+                petSpeciesId: true,
+                marketValue: true,
+                historical: true,
+                name: true,
+                regionId: true,
+                realmId: true,
+                regionPrefix: true,
+                gameVersion: true,
+                type: true,
+                itemMediaUrl: true,
+                itemName: true,
+                itemQuality: true,
+                itemClass: true,
+                itemSubClass: true,
+              },
+            }
+          );
+
+          return pricingData;
+        },
+        {
+          params: t.Object({
+            auctionHouseId: t.Number(),
+          }),
+        }
+      )
   )
   .listen(3000);
 

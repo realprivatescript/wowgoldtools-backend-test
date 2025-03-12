@@ -1,5 +1,5 @@
 import { prisma } from "../db/db";
-import { BATCH_SIZE, limit } from "../globals/globals";
+import { BATCH_SIZE } from "../globals/globals";
 import { SaddleItemDTO } from "../models/models";
 
 export const fetchTokenTradeSkillMasterUnlimited = async () => {
