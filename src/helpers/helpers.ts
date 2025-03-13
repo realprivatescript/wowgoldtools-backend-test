@@ -1,3 +1,4 @@
+import { classesAndSubClassesMap, qualitiesMap } from "../data/data";
 import { prisma } from "../db/db";
 import { BATCH_SIZE } from "../globals/globals";
 import { SaddleItemDTO } from "../models/models";
@@ -325,9 +326,9 @@ export const saveToDatabaseTSMClassicDataFromAllAuctionHouses = async (
           ? {
               ...auctionItem,
               itemName: saddleItem.itemName,
-              itemQuality: saddleItem.itemQuality,
-              itemClass: saddleItem.itemClass,
-              itemSubClass: saddleItem.itemSubClass,
+              itemQuality: qualitiesMap[saddleItem.itemQuality],
+              itemClass: classesAndSubClassesMap[saddleItem.itemClass].class,
+              itemSubClass: classesAndSubClassesMap[saddleItem.itemSubClass],
             }
           : null;
       })

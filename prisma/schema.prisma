@@ -33,9 +33,9 @@ model extended_auction_data_items {
   type           String
   itemMediaUrl   String
   itemName       String
-  itemQuality    Int
-  itemClass      Int
-  itemSubClass   Int
+  itemQuality    String
+  itemClass      String
+  itemSubClass   String
 
   @@id([auctionHouseId, itemId], map: "extended_auction_data_items_auctionHouseId_itemId_pk")
 }
