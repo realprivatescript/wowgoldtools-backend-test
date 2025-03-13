@@ -326,12 +326,12 @@ export const saveToDatabaseTSMClassicDataFromAllAuctionHouses = async (
           ? {
               ...auctionItem,
               itemName: saddleItem.itemName,
-              itemQuality: qualitiesMap[saddleItem.itemQuality],
-              itemClass: classesAndSubClassesMap[saddleItem.itemClass].class,
-              itemSubClass:
-                classesAndSubClassesMap[saddleItem.itemClass][
-                  saddleItem.itemSubClass
-                ],
+              itemQuality: qualitiesMap[saddleItem.itemQuality] as string,
+              itemClass: classesAndSubClassesMap[saddleItem.itemClass]
+                .class as string,
+              itemSubClass: classesAndSubClassesMap[saddleItem.itemClass][
+                saddleItem.itemSubClass
+              ] as string,
             }
           : null;
       })
