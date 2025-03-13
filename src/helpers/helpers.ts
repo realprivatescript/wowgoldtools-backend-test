@@ -1,4 +1,4 @@
-import { classesAndSubClassesMap, qualitiesMap } from "../data/data";
+import { classesAndSubClassesList, qualitiesList } from "../data/data";
 import { prisma } from "../db/db";
 import { BATCH_SIZE } from "../globals/globals";
 import { SaddleItemDTO } from "../models/models";
@@ -322,19 +322,40 @@ export const saveToDatabaseTSMClassicDataFromAllAuctionHouses = async (
         const saddleItem = saddleData.find(
           (s) => s.itemID === auctionItem.itemId
         );
-        return saddleItem
+
+        return saddleItem &&
+          classesAndSubClassesList.find(
+            (classAndSubClass) =>
+              classAndSubClass.classId === saddleItem.itemClass &&
+              classAndSubClass.subClassId === saddleItem.itemSubClass
+          )?.subClass &&
+          qualitiesList.find(
+            (quality) => quality.qualityId === saddleItem.itemQuality
+          )?.quality // double check that both class and item subclass working with this, otherwise might throw some errors
           ? {
               ...auctionItem,
               itemName: saddleItem.itemName,
-              itemQuality: saddleItem.itemQuality,
-              itemClass: saddleItem.itemClass,
-              itemSubClass: saddleItem.itemSubClass,
-              // itemQuality: qualitiesMap[saddleItem.itemQuality] as string,
+              // itemQuality: saddleItem.itemQuality,
+              // itemClass: saddleItem.itemClass,
+              // itemSubClass: saddleItem.itemSubClass,
+              // itemQuality:
               // itemClass: classesAndSubClassesMap[saddleItem.itemClass]
               //   .class as string,
               // itemSubClass: classesAndSubClassesMap[saddleItem.itemClass][
               //   saddleItem.itemSubClass
               // ] as string,
+              itemClass: classesAndSubClassesList.find(
+                (classAndSubClass) =>
+                  classAndSubClass.classId === saddleItem.itemClass
+              )?.class,
+              itemSubClass: classesAndSubClassesList.find(
+                (classAndSubClass) =>
+                  classAndSubClass.classId === saddleItem.itemClass &&
+                  classAndSubClass.subClassId === saddleItem.itemSubClass
+              )?.subClass,
+              itemQuality: qualitiesList.find(
+                (quality) => quality.qualityId === saddleItem.itemQuality
+              )?.quality,
             }
           : null;
       })
